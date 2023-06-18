@@ -1,35 +1,69 @@
-import 'package:datemate/screen/Auth/auth_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:datemate/screen/NavScreens/account_screen.dart';
+import 'package:datemate/screen/NavScreens/match_screen.dart';
+import 'package:datemate/screen/NavScreens/swipe_screen.dart';
+import 'package:datemate/statemanagement/user_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:location/location.dart';
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class HomeScreen extends ConsumerStatefulWidget {
+  HomeScreen({Key? key}) : super(key: key);
+
   static const String route = 'Home';
 
   @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+
+
+  int _currentIndex = 2;
+
+  final List<Widget> _screens = [
+    SwipeScreen(),
+    MatchesScreen(),
+    AccountScreen()
+  ];
+
+  final List<BottomNavigationBarItem> _bottomNavigationBarItems = [
+    BottomNavigationBarItem(
+      icon: Icon(Icons.amp_stories_rounded),
+      label: 'Swipe',
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.favorite),
+      label: 'Matches',
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.account_circle_rounded),
+      label: 'Accounts',
+    ),
+  ];
+
+  @override
   Widget build(BuildContext context) {
+    if (ref.read(userProvider).user == null) {
+      return Center(
+        child:
+            CircularProgressIndicator(), // Show a loading indicator while fetching user data
+      );
+    }
+
     return Scaffold(
-      body: SafeArea(
-          child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Home'),
-            Text('${FirebaseAuth.instance.currentUser}'),
-            ElevatedButton(
-                onPressed: () {
-                  FirebaseAuth.instance.signOut().then((value) => {
-                        Navigator.pushReplacementNamed(
-                            context, AuthScreen.route)
-                      });
-                },
-                child: Text('Logout'))
-          ],
-        ),
-      )),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        items: _bottomNavigationBarItems,
+        showUnselectedLabels: false,
+        showSelectedLabels: false,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+      ),
+      body: _screens[_currentIndex],
     );
   }
 }

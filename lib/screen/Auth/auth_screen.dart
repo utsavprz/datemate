@@ -25,7 +25,7 @@ class AuthScreen extends StatelessWidget {
               builder: (context, userSnapshot) {
                 if (userSnapshot.connectionState == ConnectionState.done) {
                   if (userSnapshot.data!) {
-                    return const HomeScreen();
+                    return HomeScreen();
                   } else {
                     return CreateProfileScreen();
                   }

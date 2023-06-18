@@ -1,5 +1,3 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
-import 'dart:convert';
 import 'dart:io';
 
 class UserModel {
@@ -13,6 +11,8 @@ class UserModel {
   final File? imageFile;
   final String? image;
   final List<String>? interest;
+  final double? lat;
+  final double? lon;
 
   const UserModel({
     this.id,
@@ -25,7 +25,26 @@ class UserModel {
     this.imageFile,
     this.image,
     required this.interest,
+    this.lat,
+    this.lon,
   });
+
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      id: json['id'],
+      userId: json['userId'],
+      firstName: json['firstName'],
+      lastName: json['lastName'],
+      birthday:
+          json['birthday'] != null ? DateTime.parse(json['birthday']) : null,
+      phoneNumber: json['phoneNumber'],
+      gender: json['gender'],
+      image: json['image'],
+      lat: json['lat'],
+      lon: json['lon'],
+      interest: List<String>.from(json['interest'] ?? []),
+    );
+  }
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
@@ -39,6 +58,8 @@ class UserModel {
       'imageFile': imageFile,
       'image': image,
       'interest': interest,
+      'lat': lat,
+      'lon': lon,
     };
   }
 
@@ -52,6 +73,8 @@ class UserModel {
       'gender': gender,
       'image': image,
       'interest': interest,
+      'lat': lat,
+      'lon': lon,
     };
   }
 }
