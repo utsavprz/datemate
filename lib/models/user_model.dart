@@ -77,4 +77,9 @@ class UserModel {
       'lon': lon,
     };
   }
+
+  @override
+  String toString() {
+    return 'UserModel(userId: $userId, firstName: $firstName, lastName: $lastName)';
+  }
 }

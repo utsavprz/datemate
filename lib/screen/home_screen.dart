@@ -17,9 +17,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-
-
-  int _currentIndex = 2;
+  int _currentIndex = 0;
 
   final List<Widget> _screens = [
     SwipeScreen(),

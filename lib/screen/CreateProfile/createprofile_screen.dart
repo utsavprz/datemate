@@ -7,6 +7,7 @@ import 'package:datemate/screen/CreateProfile/profile3_screen.dart';
 import 'package:datemate/screen/CreateProfile/profile4_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class CreateProfileScreen extends StatefulWidget {
   const CreateProfileScreen({super.key});
@@ -58,16 +59,37 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
                           color: Color.fromARGB(255, 212, 212, 212))),
                   child: IconButton(
                     splashRadius: 1,
-                    icon: Icon(
-                      Icons.chevron_left_sharp,
-                      color: Color.fromARGB(255, 215, 78, 91),
-                    ),
+                    icon: _currentPageIndex != 0
+                        ? Icon(
+                            Icons.chevron_left_sharp,
+                            color: Color.fromARGB(255, 215, 78, 91),
+                          )
+                        : Icon(
+                            Icons.logout_rounded,
+                            color: Color.fromARGB(255, 215, 78, 91),
+                          ),
                     onPressed: () {
                       if (_currentPageIndex == 0) {
-                        FirebaseAuth.instance.signOut().then((value) => {
+                        final GoogleSignIn googleSignIn = GoogleSignIn();
+                        if (googleSignIn.currentUser != null) {
+                          googleSignIn.disconnect().then((_) {
+                            FirebaseAuth.instance.signOut().then((_) {
                               Navigator.pushReplacementNamed(
-                                  context, AuthScreen.route)
+                                  context, AuthScreen.route);
+                            }).catchError((error) {
+                              // Handle sign-out error
+                              print('Error signing out: $error');
                             });
+                          }).catchError((error) {
+                            // Handle revoke access error
+                            print('Error revoking access: $error');
+                          });
+                        } else {
+                          FirebaseAuth.instance.signOut().then((_) {
+                            Navigator.pushReplacementNamed(
+                                context, AuthScreen.route);
+                          });
+                        }
                       } else {
                         _pageController.previousPage(
                           duration: Duration(milliseconds: 300),

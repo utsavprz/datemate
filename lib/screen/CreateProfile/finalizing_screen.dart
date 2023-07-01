@@ -23,8 +23,8 @@ class _FinalizingScreenState extends ConsumerState<FinalizingScreen> {
     final usrProvider = ref.read(userProvider);
     usrProvider.uploadUserDataToFirebase();
     _initLocationService();
-    Future.delayed(Duration(seconds: 5)).then(
-        (value) => {Navigator.pushReplacementNamed(context, HomeScreen.route)});
+    // Future.delayed(Duration(seconds: 5)).then(
+    //     (value) => {)});
     super.initState();
   }
 
@@ -57,6 +57,7 @@ class _FinalizingScreenState extends ConsumerState<FinalizingScreen> {
 
       await _updateUserDataToFirebase();
       await ref.read(userProvider).fetchUserDataFromFirebase();
+      Navigator.pushReplacementNamed(context, HomeScreen.route);
     } catch (error) {
       print('Error during location service initialization: $error');
       // Handle the error gracefully

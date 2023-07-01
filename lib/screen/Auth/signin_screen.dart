@@ -2,19 +2,22 @@ import 'package:datemate/screen/home_screen.dart';
 import 'package:datemate/screen/Auth/signup_screen.dart';
 import 'package:datemate/screen/privacypolicy_screen.dart';
 import 'package:datemate/screen/terms_screen.dart';
+import 'package:datemate/services/auth_service.dart';
+import 'package:datemate/statemanagement/user_provider.dart';
 import 'package:datemate/utils/google_auth_btn.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SigninScreen extends StatefulWidget {
+class SigninScreen extends ConsumerStatefulWidget {
   const SigninScreen({super.key});
   static const String route = 'SigninScreen';
 
   @override
-  State<SigninScreen> createState() => _SigninScreenState();
+  _SigninScreenState createState() => _SigninScreenState();
 }
 
-class _SigninScreenState extends State<SigninScreen> {
+class _SigninScreenState extends ConsumerState<SigninScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
@@ -28,53 +31,17 @@ class _SigninScreenState extends State<SigninScreen> {
     super.dispose();
   }
 
-  void showErrorMessage(String message) {
-    showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text(message),
-          );
-        });
-  }
-
-  Future signIn() async {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Center(
-          child: CircularProgressIndicator(),
-        );
-      },
+  void showErrorMessage(String message, BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: Colors.red,
+        content: Text(message),
+      ),
     );
-
-    try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
-      Navigator.pop(context);
-      disposeFocusNode();
-      Navigator.pop(context);
-
-      // Navigator.pushReplacementNamed(context, HomeScreen.route);
-    } on FirebaseAuthException catch (e) {
-      // ? User Not found message
-      Navigator.pop(context);
-      if (e.code == 'user-not-found') {
-        showErrorMessage('User not found');
-      }
-      // ? Wrong password message
-      else if (e.code == 'wrong-password') {
-        showErrorMessage('Incorrect Credentials');
-      }
-    }
   }
 
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
+  Future<void> getuserdata() async {
+    await ref.read(userProvider).fetchUserDataFromFirebase();
   }
 
   @override
@@ -138,6 +105,7 @@ class _SigninScreenState extends State<SigninScreen> {
                                 child: TextField(
                                     focusNode: passwordFocusNode,
                                     controller: passwordController,
+                                    obscureText: true,
                                     decoration: InputDecoration(
                                         border: OutlineInputBorder(
                                             borderRadius:
@@ -153,34 +121,45 @@ class _SigninScreenState extends State<SigninScreen> {
                                   width: double.infinity,
                                   height: 50,
                                   child: ElevatedButton(
-                                    onPressed: () {
-                                      signIn();
+                                    onPressed: () async {
+                                      if (emailController.text.isNotEmpty &&
+                                          passwordController.text.isNotEmpty) {
+                                        SignupStatus status =
+                                            await AuthService().signIn(
+                                          emailController.text,
+                                          passwordController.text,
+                                          context,
+                                        );
+
+                                        if (status == SignupStatus.success) {
+                                          getuserdata(); // Sign-in successful
+                                          disposeFocusNode();
+                                          Navigator.pop(context);
+                                          // Handle success response or perform additional actions
+                                        } else if (status ==
+                                            SignupStatus.userDoesnotExists) {
+                                          // User does not exist
+                                          showErrorMessage(
+                                              'User doesn\'t exist', context);
+                                        } else if (status ==
+                                            SignupStatus.incorrectPassword) {
+                                          // Incorrect password
+                                          showErrorMessage(
+                                              'Incorrect credentials', context);
+                                        } else {
+                                          // Other sign-in error
+                                          showErrorMessage(
+                                              'Error during sign-in. Please try again.',
+                                              context);
+                                        }
+                                      } else {
+                                        showErrorMessage(
+                                            'Fields can\'t be empty', context);
+                                      }
                                     },
                                     child: Text('Log in'),
                                   ),
                                 ),
-                                // SizedBox(
-                                //   height: 10,
-                                // ),
-                                // GestureDetector(
-                                //   onTap: () {
-                                //     Navigator.pushReplacementNamed(
-                                //         context, SignupScreen.route);
-                                //   },
-                                //   child: Row(
-                                //     mainAxisAlignment: MainAxisAlignment.center,
-                                //     children: [
-                                //       Text(
-                                //         'Don\'t have an account? ',
-                                //         style: TextStyle(color: Colors.grey),
-                                //       ),
-                                //       Text(
-                                //         'Register',
-                                //         style: TextStyle(color: Colors.red),
-                                //       ),
-                                //     ],
-                                //   ),
-                                // )
                               ],
                             ),
                           ),

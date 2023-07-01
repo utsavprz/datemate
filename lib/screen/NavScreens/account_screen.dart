@@ -1,10 +1,12 @@
 import 'package:datemate/screen/Auth/auth_screen.dart';
+import 'package:datemate/screen/edit_profile_screen.dart';
 import 'package:datemate/statemanagement/user_provider.dart';
 import 'package:datemate/utils/account_listtile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class AccountScreen extends ConsumerStatefulWidget {
   // const AccountScreen({super.key});
@@ -35,8 +37,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                   Column(
                     children: [
                       Container(
-                        width: 150,
-                        height: 150,
+                        width: 200,
+                        height: 200,
                         decoration: const BoxDecoration(
                           shape: BoxShape.circle,
                           color: Colors.grey,
@@ -79,13 +81,13 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                 children: [
                   AccountListTile(
                       tileLeading: 'My Profile',
-                      tileRoute: 'Previous donation records',
+                      tileRoute: EditProfileScreen.route,
                       tileIcon: const Icon(
                         Icons.account_circle,
                         color: Color.fromARGB(255, 236, 76, 65),
                       ),
                       tileFunction: () {
-                        // ignore: use_build_context_synchronously
+                        Navigator.pushNamed(context, EditProfileScreen.route);
                       }),
                   AccountListTile(
                       tileLeading: 'Notification',
@@ -127,10 +129,27 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                         color: Colors.red,
                       ),
                       tileFunction: () async {
-                        debugPrint('Logout');
-                        FirebaseAuth.instance.signOut();
-                        Navigator.pushReplacementNamed(
-                            context, AuthScreen.route);
+                        final GoogleSignIn googleSignIn = GoogleSignIn();
+                        if (googleSignIn.currentUser != null) {
+                          googleSignIn.disconnect().then((_) {
+                            FirebaseAuth.instance.signOut().then((_) {
+                              Navigator.pushReplacementNamed(
+                                  context, AuthScreen.route);
+                            }).catchError((error) {
+                              // Handle sign-out error
+                              print('Error signing out: $error');
+                            });
+                          }).catchError((error) {
+                            // Handle revoke access error
+                            print('Error revoking access: $error');
+                          });
+                        } else {
+                          print('not google acc');
+                          FirebaseAuth.instance.signOut().then((_) {
+                            Navigator.pushReplacementNamed(
+                                context, AuthScreen.route);
+                          });
+                        }
                       }),
                   // AccountListTile(
                   //     tileLeading: 'Token',Firebase

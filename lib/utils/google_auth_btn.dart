@@ -9,6 +9,7 @@ class GoogleAuthBtn extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () async {
+  
         await AuthService().signInWithGoogle();
         Navigator.pop(context);
       },

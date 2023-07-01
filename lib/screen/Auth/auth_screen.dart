@@ -20,11 +20,13 @@ class AuthScreen extends StatelessWidget {
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             final currentUser = FirebaseAuth.instance.currentUser;
+            print(currentUser);
             return FutureBuilder<bool>(
               future: AuthService().doesUserProfileExist(currentUser!.uid),
               builder: (context, userSnapshot) {
                 if (userSnapshot.connectionState == ConnectionState.done) {
                   if (userSnapshot.data!) {
+                    print('has data');
                     return HomeScreen();
                   } else {
                     return CreateProfileScreen();
