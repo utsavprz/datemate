@@ -27,6 +27,7 @@ class UserProvider extends ChangeNotifier {
     File? imageFile,
     String? image,
     List<String>? interest,
+    List<String>? images,
     double? lat,
     double? lon,
   }) {
@@ -41,6 +42,7 @@ class UserProvider extends ChangeNotifier {
       imageFile: imageFile ?? _user?.imageFile,
       image: image ?? _user?.image,
       interest: interest ?? _user?.interest,
+      images: images ?? _user?.images,
       lat: lat ?? _user?.lat,
       lon: lon ?? _user?.lon,
     );
@@ -69,6 +71,7 @@ class UserProvider extends ChangeNotifier {
         gender: _user?.gender,
         image: _user?.image,
         interest: _user?.interest,
+        images: _user?.images,
       );
 
       final userData = updatedUser.toJson() as Map<String, dynamic>;
@@ -87,13 +90,13 @@ class UserProvider extends ChangeNotifier {
     String? gender,
     String? image,
     List<String>? interest,
+    List<String>? images,
     double? lat,
     double? lon,
   }) async {
     try {
       final user = FirebaseAuth.instance.currentUser;
       final userId = user?.uid;
-
 
       final userDocRef =
           FirebaseFirestore.instance.collection('userProfile').doc(userId);
@@ -107,12 +110,12 @@ class UserProvider extends ChangeNotifier {
         gender: gender ?? _user?.gender,
         image: image ?? _user?.image,
         interest: interest ?? _user?.interest,
+        images: images ?? _user?.images,
         lat: lat ?? _user?.lat,
         lon: lon ?? _user?.lon,
       );
 
       final userData = updatedUser.toJson() as Map<String, dynamic>;
-
 
       await userDocRef.update(userData);
     } catch (error) {
@@ -144,6 +147,7 @@ class UserProvider extends ChangeNotifier {
           phoneNumber: userModel.phoneNumber,
           gender: userModel.gender,
           image: userModel.image,
+          images: userModel.images,
           interest: userModel.interest,
           lat: userModel.lat,
           lon: userModel.lon,

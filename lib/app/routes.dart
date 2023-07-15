@@ -5,9 +5,11 @@ import 'package:datemate/screen/CreateProfile/profile1_screen.dart';
 import 'package:datemate/screen/CreateProfile/profile3_screen.dart';
 import 'package:datemate/screen/NavScreens/account_screen.dart';
 import 'package:datemate/screen/edit_profile_screen.dart';
+import 'package:datemate/screen/faq_screen.dart';
 
 import 'package:datemate/screen/home_screen.dart';
 import 'package:datemate/screen/match_screen.dart';
+import 'package:datemate/screen/noti_screen.dart';
 import 'package:datemate/screen/onboarding_screen.dart';
 import 'package:datemate/screen/Auth/signin_screen.dart';
 import 'package:datemate/screen/Auth/signup_screen.dart';
@@ -35,6 +37,8 @@ var getAppRoutes = <String, WidgetBuilder>{
   UserDetailScreen.route: (context) => UserDetailScreen(),
   EditProfileScreen.route: (context) => EditProfileScreen(),
   AccountScreen.route: (context) => AccountScreen(),
+  NotificationScreen.route: (context) => NotificationScreen(),
+  FAQScreen.route: (context) => FAQScreen(),
   // Profile1Screen.route: (context) =>  Profile1Screen(),
   // Profile2Screen.route: (context) => const Profile2Screen(),
   // Profile3Screen.route: (context) => const Profile3Screen()

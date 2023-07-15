@@ -1,5 +1,7 @@
 import 'package:datemate/screen/NavScreens/account_screen.dart';
+import 'package:datemate/screen/NavScreens/chat_screen.dart';
 import 'package:datemate/screen/NavScreens/match_screen.dart';
+
 import 'package:datemate/screen/NavScreens/swipe_screen.dart';
 import 'package:datemate/statemanagement/user_provider.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +24,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final List<Widget> _screens = [
     SwipeScreen(),
     MatchesScreen(),
+    UserSelectionScreen(),
     AccountScreen()
   ];
 
@@ -33,6 +36,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     BottomNavigationBarItem(
       icon: Icon(Icons.favorite),
       label: 'Matches',
+    ),
+    BottomNavigationBarItem(
+      icon: Icon(Icons.chat),
+      label: 'Chat',
     ),
     BottomNavigationBarItem(
       icon: Icon(Icons.account_circle_rounded),
@@ -51,6 +58,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       bottomNavigationBar: BottomNavigationBar(
+        selectedIconTheme: IconThemeData(
+          color: Colors.red,
+        ),
+        unselectedIconTheme: IconThemeData(color: Colors.grey),
         currentIndex: _currentIndex,
         items: _bottomNavigationBarItems,
         showUnselectedLabels: false,

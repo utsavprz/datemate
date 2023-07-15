@@ -6,6 +6,9 @@ import 'package:datemate/screen/user_detail_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import 'package:intl/intl.dart';
+import 'dart:io';
+
 class SwipeScreen extends StatefulWidget {
   @override
   _SwipeScreenState createState() => _SwipeScreenState();
@@ -13,6 +16,7 @@ class SwipeScreen extends StatefulWidget {
 
 class _SwipeScreenState extends State<SwipeScreen>
     with SingleTickerProviderStateMixin {
+  UserModel? user;
   FirebaseAuth _auth = FirebaseAuth.instance;
   FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -92,6 +96,7 @@ class _SwipeScreenState extends State<SwipeScreen>
         lat: userData['lat'],
         lon: userData['lon'],
         interest: List<String>.from(userData['interest'] ?? []),
+        images: List<String>.from(userData['images'] ?? []),
       );
     }).toList();
 
@@ -157,36 +162,61 @@ class _SwipeScreenState extends State<SwipeScreen>
   Future<void> handleSwipeRight(UserModel user) async {
     final currentUser = await _auth.currentUser;
     final currentUserDoc =
+        _firestore.collection('userProfile').doc(user.userId);
+    final LoggedUserData =
         _firestore.collection('userProfile').doc(currentUser!.uid);
 
-// Get the current server timestamp
     final serverTimestamp = DateTime.now();
 
-    // Update the user's preferences or indicate not interested
+    // Update the liked user's data to include the liker's information
     await currentUserDoc.update({
+      'likedBy': FieldValue.arrayUnion([
+        {
+          'userId': currentUser.uid,
+          'timestamp': serverTimestamp.toString(),
+        },
+      ]),
+    });
+
+    await LoggedUserData.update({
       'likedProfiles': FieldValue.arrayUnion([
         {
           'userId': user.userId,
           'timestamp': serverTimestamp,
-        }
+        },
       ]),
     });
 
     // Check for mutual likes and display match screen if found
-    final likedByUser = await userLikedByCurrentUser(user);
-    if (likedByUser) {
-      print("USER LIKED BY USER");
+    final likedByCurrentUser = await userLikedByCurrentUser(user);
+    if (likedByCurrentUser) {
+      await LoggedUserData.update({
+        'matchedWith': FieldValue.arrayUnion([
+          {
+            'userId': user.userId,
+            'timestamp': serverTimestamp,
+          },
+        ]),
+      });
+      await currentUserDoc.update({
+        'matchedWith': FieldValue.arrayUnion([
+          {
+            'userId': currentUser.uid,
+            'timestamp': serverTimestamp,
+          },
+        ]),
+      });
       // Notify both users and display match screen
       showMatchScreen(user);
 
       // Remove the profile from potential matches or hide it temporarily
       await currentUserDoc
           .collection('potentialMatches')
-          .doc(user.userId)
+          .doc(currentUser.uid)
           .delete();
       await currentUserDoc
           .collection('likedProfiles')
-          .doc(user.userId)
+          .doc(currentUser.uid)
           .delete();
     }
 
@@ -195,7 +225,22 @@ class _SwipeScreenState extends State<SwipeScreen>
       'userId': currentUser.uid,
       'profileId': user.userId,
       'action': 'right',
-      'timestamp': serverTimestamp,
+      'timestamp': serverTimestamp.toString(),
+    });
+
+    // Retrieve current user data
+    final currentUserData = await LoggedUserData.get();
+    final userName = currentUserData['firstName'];
+    final userImage = currentUserData['image'];
+
+    // Add a notification for the liked user
+    await _firestore.collection('notifications').add({
+      'userId': user.userId,
+      'userName': userName,
+      'userImage': userImage,
+      'message': 'You have been liked by $userName!',
+      'time': DateFormat('hh:mm a').format(serverTimestamp),
+      'read': false,
     });
   }
 
@@ -240,22 +285,22 @@ class _SwipeScreenState extends State<SwipeScreen>
                         ),
                       ],
                     ),
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                              color: Color.fromARGB(255, 212, 212, 212))),
-                      child: IconButton(
-                        splashRadius: 1,
-                        icon: Icon(
-                          Icons.filter_list_outlined,
-                          color: Color.fromARGB(255, 215, 78, 91),
-                        ),
-                        onPressed: () {},
-                      ),
-                    )
+                    // Container(
+                    //   width: 40,
+                    //   height: 40,
+                    //   decoration: BoxDecoration(
+                    //       borderRadius: BorderRadius.circular(10),
+                    //       border: Border.all(
+                    //           color: Color.fromARGB(255, 212, 212, 212))),
+                    //   child: IconButton(
+                    //     splashRadius: 1,
+                    //     icon: Icon(
+                    //       Icons.filter_list_outlined,
+                    //       color: Color.fromARGB(255, 215, 78, 91),
+                    //     ),
+                    //     onPressed: () {},
+                    //   ),
+                    // )
                   ],
                 ),
               ),
@@ -273,112 +318,132 @@ class _SwipeScreenState extends State<SwipeScreen>
                       final userList = snapshot.data!;
                       print('USERLIST:${userList.toString()}');
 
-                      return AppinioSwiper(
-                        cardsCount: userList.length,
-                        onSwiping: (AppinioSwiperDirection direction) {
-                          print(direction.toString());
-                        },
-                        onEnd: () {
-                          Center(
-                            child: Text('No more users to swipe.'),
-                          );
-                        },
-                        swipeOptions: AppinioSwipeOptions.horizontal,
-                        onSwipe: (index, direction) async {
-                          index = index - 1;
+                      return Column(
+                        children: [
+                          Expanded(
+                            flex: 4,
+                            child: AppinioSwiper(
+                              cardsCount: userList.length,
+                              onSwiping: (AppinioSwiperDirection direction) {
+                                print(direction.toString());
+                              },
+                              onEnd: () {
+                                Center(
+                                  child: Text('No more users to swipe.'),
+                                );
+                              },
+                              swipeOptions: AppinioSwipeOptions.horizontal,
+                              onSwipe: (index, direction) async {
+                                index = index - 1;
+                                setState(() {
+                                  user = userList[index];
+                                });
 
-                          final user = userList[index];
+                                if (direction == AppinioSwiperDirection.left) {
+                                  await handleSwipeLeft(user!)
+                                      .then((value) => print(user!.firstName));
+                                } else if (direction ==
+                                    AppinioSwiperDirection.right) {
+                                  await handleSwipeRight(user!)
+                                      .then((value) => print(user!.firstName));
+                                }
+                              },
+                              cardsBuilder: (BuildContext context, int index) {
+                                if (index < 0) {
+                                  return Container(
+                                    child: Center(
+                                      child: Text('No users to swipe'),
+                                    ),
+                                  ); // Return an empty container if index is out of bounds
+                                }
 
-                          if (direction == AppinioSwiperDirection.left) {
-                            await handleSwipeLeft(user)
-                                .then((value) => print(user.firstName));
-                          } else if (direction ==
-                              AppinioSwiperDirection.right) {
-                            await handleSwipeRight(user)
-                                .then((value) => print(user.firstName));
-                          }
-                        },
-                        cardsBuilder: (BuildContext context, int index) {
-                          if (index < 0) {
-                            return Container(
-                              child: Center(
-                                child: Text('No users to swipe'),
+                                final user = userList[index];
+                                return _buildCard(context, user);
+                                // ...
+                              },
+                            ),
+                          ),
+                          Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.only(top: 15),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      handleSwipeLeft(user!);
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      primary:
+                                          Color.fromARGB(255, 255, 255, 255),
+                                      shape: CircleBorder(),
+                                      padding: EdgeInsets.all(16.0),
+                                      shadowColor:
+                                          Color.fromARGB(255, 196, 196, 196)
+                                              .withOpacity(0.6),
+                                      elevation: 10,
+                                    ),
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.close_rounded,
+                                        size: 28.0,
+                                        color:
+                                            Color.fromARGB(255, 244, 112, 36),
+                                      ),
+                                    ),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      // Add "Superlike" button functionality here
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      primary: Color(0xFF8A2283),
+                                      shape: CircleBorder(),
+                                      padding: EdgeInsets.all(24.0),
+                                      shadowColor:
+                                          Colors.black.withOpacity(0.3),
+                                      elevation: 4.0,
+                                    ),
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.star_rounded,
+                                        size: 46.0,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      // Add "Like" button functionality here
+                                      handleSwipeRight(user!);
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      primary:
+                                          Color.fromARGB(255, 255, 255, 255),
+                                      shape: CircleBorder(),
+                                      padding: EdgeInsets.all(16.0),
+                                      shadowColor:
+                                          Color.fromARGB(255, 175, 97, 97)
+                                              .withOpacity(0.6),
+                                      elevation: 10,
+                                    ),
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.favorite,
+                                        size: 28.0,
+                                        color: Color.fromARGB(255, 236, 85, 85),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ); // Return an empty container if index is out of bounds
-                          }
-
-                          final user = userList[index];
-                          return _buildCard(context, user);
-                          // ...
-                        },
+                            ),
+                          ),
+                        ],
                       );
                     }
                   },
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.only(top: 15),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        primary: Color.fromARGB(255, 255, 255, 255),
-                        shape: CircleBorder(),
-                        padding: EdgeInsets.all(16.0),
-                        shadowColor:
-                            Color.fromARGB(255, 196, 196, 196).withOpacity(0.6),
-                        elevation: 10,
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.close_rounded,
-                          size: 28.0,
-                          color: Color.fromARGB(255, 244, 112, 36),
-                        ),
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        // Add "Superlike" button functionality here
-                      },
-                      style: ElevatedButton.styleFrom(
-                        primary: Color(0xFF8A2283),
-                        shape: CircleBorder(),
-                        padding: EdgeInsets.all(24.0),
-                        shadowColor: Colors.black.withOpacity(0.3),
-                        elevation: 4.0,
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.star_rounded,
-                          size: 46.0,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        // Add "Like" button functionality here
-                      },
-                      style: ElevatedButton.styleFrom(
-                        primary: Color.fromARGB(255, 255, 255, 255),
-                        shape: CircleBorder(),
-                        padding: EdgeInsets.all(16.0),
-                        shadowColor:
-                            Color.fromARGB(255, 196, 196, 196).withOpacity(0.6),
-                        elevation: 10,
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.favorite,
-                          size: 28.0,
-                          color: Color.fromARGB(255, 236, 85, 85),
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
               ),
             ],

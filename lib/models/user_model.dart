@@ -13,6 +13,7 @@ class UserModel {
   final List<String>? interest;
   final double? lat;
   final double? lon;
+    final List<String>? images;
 
   const UserModel({
     this.id,
@@ -27,6 +28,7 @@ class UserModel {
     required this.interest,
     this.lat,
     this.lon,
+    this.images,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -43,6 +45,7 @@ class UserModel {
       lat: json['lat'],
       lon: json['lon'],
       interest: List<String>.from(json['interest'] ?? []),
+      images: List<String>.from(json['images'] ?? []),
     );
   }
 
@@ -60,6 +63,7 @@ class UserModel {
       'interest': interest,
       'lat': lat,
       'lon': lon,
+      'images':images
     };
   }
 
@@ -73,6 +77,7 @@ class UserModel {
       'gender': gender,
       'image': image,
       'interest': interest,
+      'iamges': images,
       'lat': lat,
       'lon': lon,
     };

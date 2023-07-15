@@ -1,5 +1,8 @@
+import 'package:datemate/models/user_model.dart';
 import 'package:datemate/screen/Auth/auth_screen.dart';
 import 'package:datemate/screen/edit_profile_screen.dart';
+import 'package:datemate/screen/faq_screen.dart';
+import 'package:datemate/screen/noti_screen.dart';
 import 'package:datemate/statemanagement/user_provider.dart';
 import 'package:datemate/utils/account_listtile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -20,9 +23,15 @@ class AccountScreen extends ConsumerStatefulWidget {
 
 class _AccountScreenState extends ConsumerState<AccountScreen> {
   @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final user = ref.read(userProvider);
-
+    user.fetchUserDataFromFirebase();
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -74,7 +83,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
             )),
             Expanded(
                 child: Container(
-              padding: const EdgeInsets.only(left: 20, right: 20),
+              padding: const EdgeInsets.only(left: 40, right: 40),
               width: double.infinity,
               // color: Colors.yellow,
               child: Column(
@@ -91,13 +100,14 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                       }),
                   AccountListTile(
                       tileLeading: 'Notification',
-                      tileRoute: 'Blood request records',
+                      tileRoute: '',
                       tileIcon: const Icon(
                         Icons.notifications,
                         color: Color.fromARGB(255, 236, 76, 65),
                       ),
                       tileFunction: () {
                         // ignore: use_build_context_synchronously
+                        Navigator.pushNamed(context, NotificationScreen.route);
                       }),
                   AccountListTile(
                       tileLeading: 'FAQ',
@@ -108,16 +118,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                       ),
                       tileFunction: () {
                         // ignore: use_build_context_synchronously
-                      }),
-                  AccountListTile(
-                      tileLeading: 'Need help?',
-                      tileRoute: 'Blood request records',
-                      tileIcon: const Icon(
-                        Icons.help_outlined,
-                        color: Color.fromARGB(255, 236, 76, 65),
-                      ),
-                      tileFunction: () {
-                        // ignore: use_build_context_synchronously
+                        Navigator.pushNamed(context, FAQScreen.route);
                       }),
 
                   AccountListTile(

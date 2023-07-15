@@ -21,26 +21,18 @@ class MatchScreen extends StatelessWidget {
                 backgroundImage: NetworkImage(user.image!),
               ),
               SizedBox(height: 30),
-              Text(
-                'Congratulations!',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
               SizedBox(height: 10),
               Text(
-                'You have a match with',
-                style: TextStyle(fontSize: 18),
-              ),
-              SizedBox(height: 10),
-              Text(
-                '${user.firstName} ${user.lastName}',
+                'It\'s a match with ${user.firstName}',
                 style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromARGB(255, 220, 78, 78)),
               ),
+              SizedBox(
+                height: 10,
+              ),
+              Text('Start a conversation now in the chat room'),
               SizedBox(height: 30),
               ElevatedButton(
                 onPressed: () {

@@ -117,7 +117,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Future<void> uploadImages() async {
     final String? userId = FirebaseAuth.instance.currentUser!.uid;
 
-    if (_selectedImages.length + _userImages!.length > 5) {
+    if (_selectedImages.length + (_userImages?.length ?? 0) > 5) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Images cannot exceed more than 5'),
@@ -142,7 +142,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         }
 
         int remainingSlots = 5 -
-            _userImages!.length; // Calculate the remaining slots in the array
+            (_userImages?.length ??
+                0); // Calculate the remaining slots in the array
 
         List<String> imageUrls = []; // List to store the image URLs
 
@@ -254,7 +255,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> pickImages() async {
     print('picking');
-    if (_selectedImages.length + _userImages!.length > 5) {
+    if (_selectedImages.length + (_userImages?.length ?? 0) > 5) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Images cannot exceed more than 5'),
@@ -372,10 +373,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                 CircleAvatar(
                                   backgroundColor: Colors.white,
                                   radius: 100.0,
-                                  backgroundImage: _userImages != null &&
-                                          _userImages!.isNotEmpty
-                                      ? NetworkImage(pp!)
-                                      : null,
+                                  backgroundImage:
+                                      pp != null ? NetworkImage(pp!) : null,
                                 ),
                                 Positioned(
                                     bottom: 0,
@@ -429,82 +428,96 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         ),
                         SizedBox(height: 16.0),
                         SizedBox(height: 8.0),
-                        GridView.count(
-                          shrinkWrap: true,
-                          crossAxisCount: 2,
-                          children: [
-                            ..._userImages!.map(
-                              (imageUrl) => Padding(
-                                padding: const EdgeInsets.all(5.0),
-                                child: Stack(
-                                  children: [
-                                    Image.network(imageUrl),
-                                    Positioned(
-                                      top: 0,
-                                      right: 0,
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          int index =
-                                              _userImages!.indexOf(imageUrl);
-                                          removeUserImage(index);
-                                        },
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Container(
-                                            padding: EdgeInsets.all(2),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              shape: BoxShape.circle,
+                        SingleChildScrollView(
+                          child: Container(
+                            height:
+                                400, // Adjust the height according to your needs
+                            child: GridView.count(
+                              shrinkWrap: true,
+                              crossAxisCount: 2,
+                              children: [
+                                if (_userImages != null)
+                                  ..._userImages!.map(
+                                    (imageUrl) => Padding(
+                                      padding: const EdgeInsets.all(5.0),
+                                      child: Stack(
+                                        children: [
+                                          Image.network(imageUrl),
+                                          Positioned(
+                                            top: 0,
+                                            right: 0,
+                                            child: GestureDetector(
+                                              onTap: () {
+                                                int index = _userImages!
+                                                    .indexOf(imageUrl);
+                                                removeUserImage(index);
+                                              },
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.all(8.0),
+                                                child: Container(
+                                                  padding: EdgeInsets.all(2),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: Icon(Icons.close,
+                                                      size: 16),
+                                                ),
+                                              ),
                                             ),
-                                            child: Icon(Icons.close, size: 16),
                                           ),
-                                        ),
+                                        ],
                                       ),
                                     ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            ..._selectedImages.map(
-                              (image) => Padding(
-                                padding: const EdgeInsets.all(5.0),
-                                child: Stack(
-                                  children: [
-                                    Image.file(image),
-                                    Positioned(
-                                      top: 0,
-                                      right: 0,
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            _selectedImages.remove(image);
-                                          });
-                                        },
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Container(
-                                            padding: EdgeInsets.all(2),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              shape: BoxShape.circle,
+                                  ),
+                                if (_selectedImages != null &&
+                                    _selectedImages.isNotEmpty)
+                                  ..._selectedImages.map(
+                                    (image) => Padding(
+                                      padding: const EdgeInsets.all(5.0),
+                                      child: Stack(
+                                        children: [
+                                          Image.file(image),
+                                          Positioned(
+                                            top: 0,
+                                            right: 0,
+                                            child: GestureDetector(
+                                              onTap: () {
+                                                setState(() {
+                                                  _selectedImages.remove(image);
+                                                });
+                                              },
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.all(8.0),
+                                                child: Container(
+                                                  padding: EdgeInsets.all(2),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.white,
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: Icon(Icons.close,
+                                                      size: 16),
+                                                ),
+                                              ),
                                             ),
-                                            child: Icon(Icons.close, size: 16),
                                           ),
-                                        ),
+                                        ],
                                       ),
                                     ),
-                                  ],
+                                  ),
+                                Container(
+                                  child: IconButton(
+                                    onPressed: () {
+                                      pickImages();
+                                    },
+                                    icon: Icon(Icons.add),
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
-                            Container(
-                                child: IconButton(
-                              onPressed: () {
-                                pickImages();
-                              },
-                              icon: Icon(Icons.add),
-                            ))
-                          ],
+                          ),
                         ),
                         SizedBox(height: 16.0),
                         if (_isUploadingImages)
